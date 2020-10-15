@@ -26,7 +26,6 @@ import org.gradle.caching.BuildCacheServiceFactory
  */
 class GCSBuildCacheServiceFactory : BuildCacheServiceFactory<GCSBuildCache> {
     override fun createBuildCacheService(configuration: GCSBuildCache, describer: BuildCacheServiceFactory.Describer): BuildCacheService {
-        val credentials = (if (configuration.credentials == null) "" else configuration.credentials) as String
         val bucket = configuration.bucket
         val prefix = configuration.prefix
         val refreshAfterSeconds = configuration.refreshAfterSeconds ?: 0
@@ -38,13 +37,12 @@ class GCSBuildCacheServiceFactory : BuildCacheServiceFactory<GCSBuildCache> {
 
         describer
             .type("Google Cloud Storage")
-            .config("credentials", credentials)
             .config("bucket", bucket)
             .config("prefix", prefix ?: "<unset>")
             .config("refreshAfterSeconds", refreshAfterSeconds.toString())
             .config("writeThreshold", writeThreshold.toString())
 
-        return GCSBuildCacheService(credentials, bucket, prefix, refreshAfterSeconds.toLong(), writeThreshold)
+        return GCSBuildCacheService(bucket, prefix, refreshAfterSeconds.toLong(), writeThreshold)
     }
 
     fun gradleException(message: String): GradleException {
@@ -53,7 +51,6 @@ class GCSBuildCacheServiceFactory : BuildCacheServiceFactory<GCSBuildCache> {
                 $message
 
                 remote( GCSBuildCache.class ) {
-                    credentials = 'my-key.json' // (optional)
                     bucket = 'my-bucket'
                     refreshAfterSeconds = 86400 // 24h (optional)
                     writeThreshold = 8 * 1024 * 1024 // 8 MiB

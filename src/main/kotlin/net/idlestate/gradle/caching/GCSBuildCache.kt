@@ -25,12 +25,11 @@ import javax.inject.Inject
  * @author Thorsten Ehlers (thorsten.ehlers@googlemail.com) (initial creation)
  */
 abstract class GCSBuildCache constructor(
-    var credentials: String? = "",
     var bucket: String? = "",
     var prefix: String? = null,
     var refreshAfterSeconds: Int? = 0,
     var writeThreshold: Int? = DEFAULT_WRITE_THRESHOLD,
 ) : AbstractBuildCache() {
-    @Inject constructor() : this("", "", null, 0, DEFAULT_WRITE_THRESHOLD) {
+    @Inject constructor() : this("", null, 0, DEFAULT_WRITE_THRESHOLD) {
     }
 }
