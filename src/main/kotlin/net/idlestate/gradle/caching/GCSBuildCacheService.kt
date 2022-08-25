@@ -56,6 +56,7 @@ class GCSBuildCacheService(credentials: String, val bucketName: String, val pref
         } catch (e: IOException) {
             throw BuildCacheException("IOException when accessing Google Cloud Storage bucket '$bucketName'.", e)
         } catch (e: StorageException) {
+            GCSBuildCacheService.Companion.storageExceptionCallback?.invoke(e)
             val code = e.code
             var advice = ""
             if (code == 400 || code == 401 || code == 403) {
@@ -111,5 +112,10 @@ class GCSBuildCacheService(credentials: String, val bucketName: String, val pref
 
     override fun close() {
         // nothing to do
+    }
+
+    companion object {
+        @JvmStatic
+        var storageExceptionCallback: ((StorageException) -> Unit)? = null
     }
 }
