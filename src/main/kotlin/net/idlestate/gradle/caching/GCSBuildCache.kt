@@ -23,7 +23,7 @@ import javax.inject.Inject
  *
  * @author Thorsten Ehlers (thorsten.ehlers@googlemail.com) (initial creation)
  */
-abstract class GCSBuildCache @Inject constructor(
-    var bucket: String? = "",
+abstract class GCSBuildCache @Inject constructor() : AbstractBuildCache() {
+    var bucket: String? = ""
     var refreshAfterSeconds: Int? = 0
-) : AbstractBuildCache()
+}
