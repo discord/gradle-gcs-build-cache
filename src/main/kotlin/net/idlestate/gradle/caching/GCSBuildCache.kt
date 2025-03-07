@@ -16,13 +16,14 @@
 package net.idlestate.gradle.caching
 
 import org.gradle.caching.configuration.AbstractBuildCache
+import javax.inject.Inject
 
 /**
  * Configuration of the GCS based build cache.
  *
  * @author Thorsten Ehlers (thorsten.ehlers@googlemail.com) (initial creation)
  */
-abstract class GCSBuildCache(
+abstract class GCSBuildCache @Inject constructor(
     var bucket: String? = "",
     var refreshAfterSeconds: Int? = 0
 ) : AbstractBuildCache()
