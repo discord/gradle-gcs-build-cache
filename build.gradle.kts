@@ -21,6 +21,8 @@ repositories {
 dependencies {
     implementation("com.google.cloud:google-cloud-storage:2.17.1")
     implementation(kotlin("stdlib-jdk8"))
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-inline:4.11.0")
 }
 
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
