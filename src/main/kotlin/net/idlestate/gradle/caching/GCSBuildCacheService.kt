@@ -15,7 +15,6 @@
  */
 package net.idlestate.gradle.caching
 
-import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.storage.Bucket
 import com.google.cloud.storage.StorageException
 import com.google.cloud.storage.StorageOptions
@@ -59,16 +58,17 @@ class GCSBuildCacheService(val bucketName: String, val prefix: String?, val refr
     }
 
     override fun store(key: BuildCacheKey, writer: BuildCacheEntryWriter) {
-        val value = FileBackedOutputStream(writeThreshold, true)
-        writer.writeTo(value)
-        val path = listOfNotNull(prefix, key.hashCode).joinToString("/")
+        FileBackedOutputStream(writeThreshold, true).use { value ->
+            writer.writeTo(value)
+            val path = listOfNotNull(prefix, key.hashCode).joinToString("/")
 
-        try {
-            value.asByteSource().openBufferedStream().use {
-                bucket.create(path, it)
+            try {
+                value.asByteSource().openBufferedStream().use {
+                    bucket.create(path, it)
+                }
+            } catch (e: StorageException) {
+                throw BuildCacheException("Unable to store '$path' in Google Cloud Storage bucket '$bucketName'.", e)
             }
-        } catch (e: StorageException) {
-            throw BuildCacheException("Unable to store '$path' in Google Cloud Storage bucket '$bucketName'.", e)
         }
     }
 
@@ -78,13 +78,17 @@ class GCSBuildCacheService(val bucketName: String, val prefix: String?, val refr
             val blob = bucket.get(path)
 
             if (blob != null) {
-                reader.readFrom(Channels.newInputStream(blob.reader()))
+                blob.reader().use { channel ->
+                    Channels.newInputStream(channel).use { input ->
+                        reader.readFrom(input)
+                    }
+                }
 
                 if (refreshAfterSeconds > 0) {
                     // Update creation time so that artifacts that are still used won't be deleted.
                     val createTime = blob.createTimeOffsetDateTime.toInstant()
                     if (createTime.plusSeconds(refreshAfterSeconds).isBefore(Instant.now())) {
-                        bucket.create(path, blob.getContent())
+                        blob.copyTo(bucketName, path).result
                     }
                 }
 
@@ -92,7 +96,7 @@ class GCSBuildCacheService(val bucketName: String, val prefix: String?, val refr
             }
         } catch (e: StorageException) {
             // https://github.com/googleapis/google-cloud-java/issues/3402
-            if (e.message?.contains("404") == true) {
+            if (e.code == 404) {
                 return false
             }
 
